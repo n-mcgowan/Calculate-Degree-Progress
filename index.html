@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Calculate your degree progress</title>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+<style>
+        .dropdown-select {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.375rem;
+            background-color: white;
+            font-size: 0.875rem;
+        }
+        
+        .module-input {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.375rem;
+            font-size: 0.875rem;
+        }
+        
+        .year-section {
+            background-color: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        .module-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-100 p-8">
+<div class="max-w-4xl mx-auto">
+<div class="bg-white rounded-lg shadow-lg overflow-hidden">
+
+<!-- Header -->
+<div class="bg-gradient-to-r from-red-600 to-pink-800 text-white p-6 rounded-t-lg">
+<h1 class="text-2xl font-bold">CALCULATE YOUR DEGREE PROGRESS</h1>
+</div>
+
+<div class="p-6 space-y-8">
+
+<!-- Selection Form -->
+<div class="space-y-6">
+
+<!-- App description -->
+<div class="space-y-2">
+<label class="text-base font-medium text-slate-700 block">This application should be used to help you to calculate your degree marks so far. Please select your programme of study, whether you are on the Professional Studies pathway or not, and whether you are on a BSc or MSci programme from the dropdowns.<br><br> Once you have selected these, please input your Module marks in the boxes (please enter your mark for 40 CAT Modules twice as these are doubly weighted).<br><br>If you have previously failed a Module and have passed on second attempt (i.e. if PH is recorded on your transcript), please enter a mark of 40 as this Module will have been capped.</div>
+
+<!-- Pathway -->
+<div class="space-y-2">
+<label class="text-sm font-medium text-slate-700 block">Degree Programme:</label>
+<select class="dropdown-select" id="Pathway">
+<option value="">Which degree programme are you on?</option>
+<option value="BIOCHEM">Biochemistry</option>
+<option value="BIOL SCI">Biological Sciences</option>
+<option value="ENV MAN">Environmental Management</option>
+<option value="FOOD">Food Science and Nutrition</option>
+<option value="MARINE">Marine Biology</option>
+<option value="MICRO">Microbiology</option>
+<option value="ZOO">Zoology</option>
+</select>
+</div>
+
+<!-- PS or No -->
+<div class="space-y-2">
+<label class="text-sm font-medium text-slate-700 block">Are you on Professional Studies?</label>
+<select class="dropdown-select" id="PS">
+<option value="">Are you on Professional Studies?</option>
+<option value="Yes">Yes</option>
+<option value="No">No</option>
+</select>
+</div>
+
+<!-- BSc or MSci -->
+<div class="space-y-2">
+<label class="text-sm font-medium text-slate-700 block">Are you on a BSc or MSci?</label>
+<select class="dropdown-select" id="BSc">
+<option value="">Are you on a BSc or MSci?</option>
+<option value="BSc">BSc</option>
+<option value="MSci">MSci</option>
+</select>
+</div>
+</div>
+
+<!-- Added attribution in small, light grey font -->
+    <div class="text-center text-gray-400 text-xs mt-2">
+        Created by SOBS SET Team 2025
+    </div>
+
+<!-- Module Input Section -->
+                <div id="moduleInputSection" class="space-y-6" style="display: none;">
+                    <h2 class="text-xl font-bold text-slate-800 border-b-2 border-slate-200 pb-2">Enter Your Module Marks</h2>
+                    <div id="moduleInputs"></div>
+                    
+                     <!-- Calculate Button -->
+                    <div class="text-center mt-6">
+                        <button id="calculateBtn" class="bg-gradient-to-r from-red-600 to-red-600 text-white px-6 py-3 rounded-lg font-medium hover:from-red-700 hover:to-pink-900 transition-colors">
+                            Calculate Progress
+                        </button>
+                    </div>
+                    
+                    <!-- Results Section -->
+                    <div id="resultsSection" class="bg-slate-50 rounded-lg p-4" style="display: none;">
+                        <h3 class="text-lg font-bold text-slate-800 mb-2">Your Results</h3>
+                        <div id="resultsContent"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        const pathwaySelect = document.getElementById('Pathway');
+        const psSelect = document.getElementById('PS');
+        const bscSelect = document.getElementById('BSc');
+        const moduleInputSection = document.getElementById('moduleInputSection');
+        const moduleInputs = document.getElementById('moduleInputs');
+        const calculateBtn = document.getElementById('calculateBtn');
+        const resultsSection = document.getElementById('resultsSection');
+        const resultsContent = document.getElementById('resultsContent');
+
+function updateSelections() {
+            const pathway = pathwaySelect.value;
+            const ps = psSelect.value;
+            const degree = bscSelect.value;
+            
+            if (!pathway || !ps || !degree) {
+                moduleInputSection.style.display = 'none';
+                return;
+            }
+            
+            generateModuleInputs();
+            moduleInputSection.style.display = 'block';
+        }
+        
+        function generateModuleInputs() {
+            const ps = psSelect.value;
+            const degree = bscSelect.value;
+            
+            let html = '';
+
+            // Year 1
+            html += createYearSection('Year 1', 1, 6);
+            
+            // Year 2
+            html += createYearSection('Year 2', 2, 6);
+            
+            // Professional Studies (if applicable)
+            if (ps === 'Yes') {
+                html += `
+                    <div class="year-section">
+                        <h3 class="text-lg font-semibold text-slate-700 mb-2">Professional Studies</h3>
+                        <div class="module-grid">
+                            <div>
+                                <label class="text-sm font-medium text-slate-600 block mb-1">Professional Studies Mark</label>
+                                <input type="number" class="module-input" id="ps_mark" min="0" max="100" placeholder="Enter mark">
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            // Year 3
+            html += createYearSection('Year 3', 3, 6);
+            
+            // MSci Project (if applicable)
+            if (degree === 'MSci') {
+                html += `
+                    <div class="year-section">
+                        <h3 class="text-lg font-semibold text-slate-700 mb-2">MSci Project</h3>
+                        <div class="module-grid">
+                            <div>
+                                <label class="text-sm font-medium text-slate-600 block mb-1">MSci Project Mark</label>
+                                <input type="number" class="module-input" id="msci_mark" min="0" max="100" placeholder="Enter mark">
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            moduleInputs.innerHTML = html;
+        }
+
+        function createYearSection(yearName, yearNum, moduleCount) {
+            let html = `
+                <div class="year-section">
+                    <h3 class="text-lg font-semibold text-slate-700 mb-2">${yearName}</h3>
+                    <div class="module-grid">
+            `;
+
+            for (let i = 1; i <= moduleCount; i++) {
+                html += `
+                    <div>
+                        <label class="text-sm font-medium text-slate-600 block mb-1">Module ${i}</label>
+                        <input type="number" class="module-input" id="year${yearNum}_module${i}" min="0" max="100" placeholder="Enter mark">
+                    </div>
+                `;
+            }
+
+            html += `
+                    </div>
+                </div>
+            `;
+
+            return html;
+        }
+
+        function calculateProgress() {
+            const ps = psSelect.value;
+            const degree = bscSelect.value;
+            
+            let results = [];
+            let totalWeightedMarks = 0;
+            let totalWeight = 0;
+            
+             // Get weightings based on pathway
+            const weightings = getWeightings(ps, degree);
+            
+            // Year 1
+            const year1Marks = getYearMarks(1, 6);
+            if (year1Marks.length > 0) {
+                const year1Average = year1Marks.reduce((sum, mark) => sum + mark, 0) / year1Marks.length;
+                results.push(`Year 1 Average: ${year1Average.toFixed(1)} (Worth ${weightings.year1}% of overall degree)`);
+                totalWeightedMarks += year1Average * weightings.year1;
+                totalWeight += weightings.year1;
+            }
+            
+            // Year 2
+            const year2Marks = getYearMarks(2, 6);
+            if (year2Marks.length > 0) {
+                const year2Average = year2Marks.reduce((sum, mark) => sum + mark, 0) / year2Marks.length;
+                results.push(`Year 2 Average: ${year2Average.toFixed(1)} (Worth ${weightings.year2}% of overall degree)`);
+                totalWeightedMarks += year2Average * weightings.year2;
+                totalWeight += weightings.year2;
+            }
+            
+            // Professional Studies
+            if (ps === 'Yes') {
+                const psMarkInput = document.getElementById('ps_mark');
+                if (psMarkInput && psMarkInput.value) {
+                    const psMark = parseFloat(psMarkInput.value);
+                    results.push(`Professional Studies: ${psMark} (Worth ${weightings.ps}% of overall degree)`);
+                    totalWeightedMarks += psMark * weightings.ps;
+                    totalWeight += weightings.ps;
+                }
+            }
+            
+             // Year 3
+            const year3Marks = getYearMarks(3, 6);
+            if (year3Marks.length > 0) {
+                const year3Average = year3Marks.reduce((sum, mark) => sum + mark, 0) / year3Marks.length;
+                results.push(`Year 3 Average: ${year3Average.toFixed(1)} (Worth ${weightings.year3}% of overall degree)`);
+                totalWeightedMarks += year3Average * weightings.year3;
+                totalWeight += weightings.year3;
+            }
+            
+            // MSci Project
+            if (degree === 'MSci') {
+                const msciMarkInput = document.getElementById('msci_mark');
+                if (msciMarkInput && msciMarkInput.value) {
+                    const msciMark = parseFloat(msciMarkInput.value);
+                    results.push(`MSci Project: ${msciMark} (Worth ${weightings.msci}% of overall degree)`);
+                    totalWeightedMarks += msciMark * weightings.msci;
+                    totalWeight += weightings.msci;
+                }
+            }
+            
+            // Overall average
+            if (totalWeight > 0) {
+                const overallAverage = totalWeightedMarks / totalWeight;
+                const truncatedAverage = Math.floor(overallAverage * 10) / 10;
+                results.push(`<strong>Overall Average: ${truncatedAverage.toFixed(1)}</strong>`);
+                
+                
+                // Degree classification
+                let classification = '';
+               if (truncatedAverage >= 70) classification = 'First Class Honours';
+                else if (truncatedAverage >= 60) classification = 'Upper Second Class Honours (2:1)';
+                else if (truncatedAverage >= 50) classification = 'Lower Second Class Honours (2:2)';
+                else if (truncatedAverage >= 40) classification = 'Third Class Honours';
+                else classification = 'Below Honours Threshold';
+                
+                results.push(`<strong>Current Classification: ${classification}</strong>`);
+            }
+            
+             resultsContent.innerHTML = results.map(result => `<p class="mb-1">${result}</p>`).join('');
+            resultsSection.style.display = 'block';
+        }
+
+        function getWeightings(ps, degree) {
+            // PS = No and BSc: Year 1 = 10%, Year 2 = 30%, Year 3 = 60%
+            if (ps === 'No' && degree === 'BSc') {
+                return { year1: 10, year2: 30, year3: 60, ps: 0, msci: 0 };
+            }
+            // PS = Yes and BSc: Year 1 = 10%, Year 2 = 20%, PS = 10%, Year 3 = 60%
+            else if (ps === 'Yes' && degree === 'BSc') {
+                return { year1: 10, year2: 20, year3: 60, ps: 10, msci: 0 };
+            }
+            // PS = No and MSci: Year 1 = 5%, Year 2 = 15%, Year 3 = 30%, MSci = 50%
+            else if (ps === 'No' && degree === 'MSci') {
+                return { year1: 5, year2: 15, year3: 30, ps: 0, msci: 50 };
+            }
+            // PS = Yes and MSci: Year 1 = 5%, Year 2 = 10%, PS = 10%, Year 3 = 25%, MSci = 50%
+            else if (ps === 'Yes' && degree === 'MSci') {
+                return { year1: 5, year2: 10, year3: 25, ps: 10, msci: 50 };
+            }
+            
+            // Default fallback
+            return { year1: 0, year2: 0, year3: 0, ps: 0, msci: 0 };
+        }
+
+        function getYearMarks(year, count) {
+            const marks = [];
+            for (let i = 1; i <= count; i++) {
+                const input = document.getElementById(`year${year}_module${i}`);
+                if (input && input.value) {
+                    marks.push(parseFloat(input.value));
+                }
+            }
+            return marks;
+        }
+
+        // Event listeners
+        pathwaySelect.addEventListener('change', updateSelections);
+        psSelect.addEventListener('change', updateSelections);
+        bscSelect.addEventListener('change', updateSelections);
+        calculateBtn.addEventListener('click', calculateProgress);
+
+        // Initialize
+        updateSelections();
+    </script>
+</body>
+</html>
