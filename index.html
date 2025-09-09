@@ -71,6 +71,16 @@
 </select>
 </div>
 
+<!-- DE or No -->
+<div class="space-y-2">
+<label class="text-sm font-medium text-slate-700 block">Are you a Direct Entry student?</label>
+<select class="dropdown-select" id="DE">
+<option value="">Are you a Direct Entry Student?</option>
+<option value="Yes">Yes</option>
+<option value="No">No</option>
+</select>
+</div>
+
 <!-- PS or No -->
 <div class="space-y-2">
 <label class="text-sm font-medium text-slate-700 block">Are you on Professional Studies?</label>
@@ -121,6 +131,7 @@
     
     <script>
         const pathwaySelect = document.getElementById('Pathway');
+        const deSelect = document.getElementById('DE');
         const psSelect = document.getElementById('PS');
         const bscSelect = document.getElementById('BSc');
         const moduleInputSection = document.getElementById('moduleInputSection');
@@ -129,12 +140,19 @@
         const resultsSection = document.getElementById('resultsSection');
         const resultsContent = document.getElementById('resultsContent');
 
+// Helper function to format percentages
+        function formatPercentage(decimal) {
+            const percentage = decimal * 100;
+            return percentage % 1 === 0 ? percentage.toString() : percentage.toFixed(2);
+        }
+
 function updateSelections() {
             const pathway = pathwaySelect.value;
+            const de = deSelect.value;
             const ps = psSelect.value;
             const degree = bscSelect.value;
             
-            if (!pathway || !ps || !degree) {
+            if (!pathway || !de || !ps || !degree) {
                 moduleInputSection.style.display = 'none';
                 return;
             }
@@ -144,13 +162,16 @@ function updateSelections() {
         }
         
         function generateModuleInputs() {
+            const de = deSelect.value;
             const ps = psSelect.value;
             const degree = bscSelect.value;
             
             let html = '';
 
-            // Year 1
+            // Year 1 (only show for non DE students)
+            if (de === 'No') {
             html += createYearSection('Year 1', 1, 6);
+            }
             
             // Year 2
             html += createYearSection('Year 2', 2, 6);
@@ -216,6 +237,7 @@ function updateSelections() {
         }
 
         function calculateProgress() {
+            const de = deSelect.value;
             const ps = psSelect.value;
             const degree = bscSelect.value;
             
@@ -224,22 +246,27 @@ function updateSelections() {
             let totalWeight = 0;
             
              // Get weightings based on pathway
-            const weightings = getWeightings(ps, degree);
+            const weightings = getWeightings(de, ps, degree);
             
-            // Year 1
+            // Year 1 (only non-DE)
+            if(de === 'No'){
             const year1Marks = getYearMarks(1, 6);
             if (year1Marks.length > 0) {
                 const year1Average = year1Marks.reduce((sum, mark) => sum + mark, 0) / year1Marks.length;
-                results.push(`Year 1 Average: ${year1Average.toFixed(1)} (Worth ${weightings.year1}% of overall degree)`);
+                results.push(`Year 1 Average: ${year1Average.toFixed(2)} (Worth ${formatPercentage(weightings.year1)}% of overall degree)`);
                 totalWeightedMarks += year1Average * weightings.year1;
                 totalWeight += weightings.year1;
             }
-            
+          } else {
+          // For DE
+          results.push(`Year 1: No marks - Direct Entry`);
+          }
+          
             // Year 2
             const year2Marks = getYearMarks(2, 6);
             if (year2Marks.length > 0) {
                 const year2Average = year2Marks.reduce((sum, mark) => sum + mark, 0) / year2Marks.length;
-                results.push(`Year 2 Average: ${year2Average.toFixed(1)} (Worth ${weightings.year2}% of overall degree)`);
+                results.push(`Year 2 Average: ${year2Average.toFixed(2)} (Worth ${formatPercentage(weightings.year2)}% of overall degree)`);
                 totalWeightedMarks += year2Average * weightings.year2;
                 totalWeight += weightings.year2;
             }
@@ -249,7 +276,7 @@ function updateSelections() {
                 const psMarkInput = document.getElementById('ps_mark');
                 if (psMarkInput && psMarkInput.value) {
                     const psMark = parseFloat(psMarkInput.value);
-                    results.push(`Professional Studies: ${psMark} (Worth ${weightings.ps}% of overall degree)`);
+                    results.push(`Professional Studies: ${psMark} (Worth ${formatPercentage(weightings.ps)}% of overall degree)`);
                     totalWeightedMarks += psMark * weightings.ps;
                     totalWeight += weightings.ps;
                 }
@@ -259,7 +286,7 @@ function updateSelections() {
             const year3Marks = getYearMarks(3, 6);
             if (year3Marks.length > 0) {
                 const year3Average = year3Marks.reduce((sum, mark) => sum + mark, 0) / year3Marks.length;
-                results.push(`Year 3 Average: ${year3Average.toFixed(1)} (Worth ${weightings.year3}% of overall degree)`);
+                results.push(`Year 3 Average: ${year3Average.toFixed(2)} (Worth ${formatPercentage(weightings.year3)}% of overall degree)`);
                 totalWeightedMarks += year3Average * weightings.year3;
                 totalWeight += weightings.year3;
             }
@@ -269,7 +296,7 @@ function updateSelections() {
                 const msciMarkInput = document.getElementById('msci_mark');
                 if (msciMarkInput && msciMarkInput.value) {
                     const msciMark = parseFloat(msciMarkInput.value);
-                    results.push(`MSci Project: ${msciMark} (Worth ${weightings.msci}% of overall degree)`);
+                    results.push(`MSci Project: ${msciMark} (Worth ${formatPercentage(weightings.msci)}% of overall degree)`);
                     totalWeightedMarks += msciMark * weightings.msci;
                     totalWeight += weightings.msci;
                 }
@@ -297,24 +324,45 @@ function updateSelections() {
             resultsSection.style.display = 'block';
         }
 
-        function getWeightings(ps, degree) {
+        function getWeightings(de, ps, degree) {
+        //DE students
+        if(de === 'Yes'){
+        //No to PS, BSc: Year 2 = 1/3, Year 3 = 2/3
+        if(ps === 'No' && degree === 'BSc'){
+        return { year1: 0, year2: 1/3, year3: 2/3, ps: 0, msci: 0};
+        }
+        //Yes to PS, BSc: Year 2 = 2/9, ps = 1/9, Year 3 = 2/3
+        else if (ps === 'Yes' && degree === 'BSc'){
+        return { year1: 0, year2: 2/9, year3: 2/3, ps: 1/9, msci: 0};
+        }
+        //No to PS, MSci: Year 2 = 3/19, Year 3 = 6/19, MSci = 10/19
+        else if (ps === 'No' && degree === 'MSci'){
+        return { year1: 0, year2: 3/19, year3: 6/19, ps: 0, msci: 10/19};
+        }
+        //Yes to PS, MSci: Year 2 = 2/19, ps = 2/19, Year 3 = 5/19, MSci = 10/19
+        else if (ps === 'Yes' && degree === 'MSci'){
+        return { year1: 0, year2: 2/19, year3: 5/19, ps: 2/19, msci: 10/19};
+        }
+        }
+        //Non DE students
+        else {
             // PS = No and BSc: Year 1 = 10%, Year 2 = 30%, Year 3 = 60%
             if (ps === 'No' && degree === 'BSc') {
-                return { year1: 10, year2: 30, year3: 60, ps: 0, msci: 0 };
+                return { year1: 0.1, year2: 0.3, year3: 0.6, ps: 0, msci: 0 };
             }
             // PS = Yes and BSc: Year 1 = 10%, Year 2 = 20%, PS = 10%, Year 3 = 60%
             else if (ps === 'Yes' && degree === 'BSc') {
-                return { year1: 10, year2: 20, year3: 60, ps: 10, msci: 0 };
+                return { year1: 0.1, year2: 0.2, year3: 0.6, ps: 0.1, msci: 0 };
             }
             // PS = No and MSci: Year 1 = 5%, Year 2 = 15%, Year 3 = 30%, MSci = 50%
             else if (ps === 'No' && degree === 'MSci') {
-                return { year1: 5, year2: 15, year3: 30, ps: 0, msci: 50 };
+                return { year1: 0.05, year2: 0.15, year3: 0.30, ps: 0, msci: 0.5 };
             }
             // PS = Yes and MSci: Year 1 = 5%, Year 2 = 10%, PS = 10%, Year 3 = 25%, MSci = 50%
             else if (ps === 'Yes' && degree === 'MSci') {
-                return { year1: 5, year2: 10, year3: 25, ps: 10, msci: 50 };
+                return { year1: 0.05, year2: 0.1, year3: 0.25, ps: 0.1, msci: 0.5 };
             }
-            
+        }
             // Default fallback
             return { year1: 0, year2: 0, year3: 0, ps: 0, msci: 0 };
         }
@@ -332,6 +380,7 @@ function updateSelections() {
 
         // Event listeners
         pathwaySelect.addEventListener('change', updateSelections);
+        deSelect.addEventListener('change', updateSelections);
         psSelect.addEventListener('change', updateSelections);
         bscSelect.addEventListener('change', updateSelections);
         calculateBtn.addEventListener('click', calculateProgress);
