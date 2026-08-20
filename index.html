@@ -199,6 +199,10 @@ function updateSelections() {
             
             // MSci Project (if applicable)
             if (degree === 'MSci') {
+                     const pathway = pathwaySelect.value;
+    if (pathway === 'FOOD') {
+        html += createYearSection('MSci Year', 4, 6);
+    } else {
                 html += `
                     <div class="year-section">
                         <h3 class="text-lg font-semibold text-slate-700 mb-2">MSci Project</h3>
@@ -211,7 +215,8 @@ function updateSelections() {
                     </div>
                 `;
             }
-            
+            }
+                
             moduleInputs.innerHTML = html;
         }
 
@@ -296,6 +301,16 @@ function updateSelections() {
             
             // MSci Project
             if (degree === 'MSci') {
+                    const pathway = pathwaySelect.value;
+    if (pathway === 'FOOD') {
+        const msciMarks = getYearMarks(4, 6);
+        if (msciMarks.length > 0) {
+            const msciAverage = msciMarks.reduce((sum, mark) => sum + mark, 0) / msciMarks.length;
+            results.push(`MSci Year Average: ${msciAverage.toFixed(2)} (Worth ${formatPercentage(weightings.msci[0]/weightings.msci[1])}% of overall degree)`);
+            totalWeightedMarks += msciAverage * weightings.msci[0];
+            totalWeight += weightings.msci[0];
+        }
+    } else {
                 const msciMarkInput = document.getElementById('msci_mark');
                 if (msciMarkInput && msciMarkInput.value) {
                     const msciMark = parseFloat(msciMarkInput.value);
@@ -304,7 +319,8 @@ function updateSelections() {
                     totalWeight += weightings.msci[0];
                 }
             }
-            
+            }
+                
             // Overall average
             if (totalWeight > 0) {
                 const overallAverage = totalWeightedMarks / totalWeight;
